@@ -1,0 +1,11 @@
+package CatDam.SAOS2025;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class Saos2025ApplicationTests {
+	@Test
+	void contextLoads() {
+	}
+}
