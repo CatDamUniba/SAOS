@@ -20,9 +20,9 @@ Il sistema implementa un’autenticazione basata su **JSON Web Token (JWT)** con
 
 ### 2.2 Installazione
 1. **Clonare il progetto**
-   ```bash
-   git clone <repository_url>
-   cd SAOS2025
+```bash
+git clone <repository_url>
+cd SAOS2025
 ```
 
 ### 2.3 Configurare il database
