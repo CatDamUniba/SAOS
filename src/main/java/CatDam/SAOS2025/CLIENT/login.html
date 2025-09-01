@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestione Libreria - Login e Registrazione</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background-color: #f4f4f4; }
+    .section { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin-left: auto; margin-right: auto; }
+    h2 { text-align: center; }
+    input, select, button { width: 100%; padding: 10px; margin: 10px 0; }
+    button { cursor: pointer; }
+    .message { margin-top: 20px; font-weight: bold; text-align: center; color: #333; }
+  </style>
+</head>
+<body>
+
+  <div class="section" id="loginSection">
+    <h2>Login Utente</h2>
+    <input type="text" id="loginUsername" placeholder="Username" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div class="section" id="registrationSection">
+    <h2>Registrazione Utente</h2>
+    <input type="text" id="regUsername" placeholder="Username" required>
+    <input type="email" id="regEmail" placeholder="Email" required>
+    <input type="password" id="regPassword" placeholder="Password" required>
+    <select id="regRuolo">
+      <option value="UTENTE">Utente</option>
+      <option value="MODERATORE">Moderatore</option>
+      <option value="ADMIN">Admin</option>
+    </select>
+    <button onclick="registrazione()">Registrati</button>
+  </div>
+
+  <div class="message" id="message"></div>
+
+  <script>
+    const messageDiv = document.getElementById('message');
+    let jwtToken = null;
+
+    async function getCsrfToken() {
+      try {
+        const response = await fetch('http://localhost:8080/api/auth/csrf', {
+          credentials: 'include' // 🔹 mantiene cookie sessione
+        });
+        const data = await response.json();
+        return data.token;
+      } catch (error) {
+        console.error('Errore nel recupero del token CSRF:', error);
+        return null;
+      }
+    }
+
+    async function login() {
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        messageDiv.textContent = 'Impossibile ottenere il token CSRF.';
+        return;
+      }
+
+      const data = {
+        username: document.getElementById('loginUsername').value,
+        password: document.getElementById('loginPassword').value
+      };
+
+      try {
+        const response = await fetch('http://localhost:8080/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': csrfToken // 🔹 aggiunto anche qui
+          },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          messageDiv.textContent = 'Credenziali non valide.';
+          return;
+        }
+
+        const result = await response.json();
+        jwtToken = result.accessToken;
+        messageDiv.textContent = `Login riuscito! Benvenuto ${result.username}`;
+      } catch (error) {
+        messageDiv.textContent = 'Errore durante il login.';
+        console.error(error);
+      }
+    }
+
+    async function registrazione() {
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        messageDiv.textContent = 'Impossibile ottenere il token CSRF.';
+        return;
+      }
+
+      if (!jwtToken) {
+        messageDiv.textContent = 'Effettua prima il login come amministratore per registrare un utente.';
+        return;
+      }
+
+      const data = {
+        username: document.getElementById('regUsername').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value,
+        ruoli: [document.getElementById('regRuolo').value]
+      };
+
+      try {
+        const response = await fetch('http://localhost:8080/api/auth/registrazione', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`,
+            'X-XSRF-TOKEN': csrfToken
+          },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          messageDiv.textContent = 'Errore durante la registrazione.';
+          return;
+        }
+
+        const result = await response.json();
+        messageDiv.textContent = result.message || 'Registrazione completata!';
+      } catch (error) {
+        messageDiv.textContent = 'Errore durante la registrazione.';
+        console.error(error);
+      }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>SAOS2025 - Frontend</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+    }
+
+    .container {
+      width: 60%;
+    }
+
+    .debug {
+      width: 35%;
+      padding: 10px;
+      border-left: 1px solid #ccc;
+    }
+
+    input, button {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+
+    <h2>Libri</h2>
+    <button onclick="caricaLibri()">Carica tutti i libri</button>
+    <ul id="libri"></ul>
+
+    <h3>Aggiungi un libro</h3>
+    <input type="text" id="nomeLibro" placeholder="Titolo" />
+    <input type="text" id="autoreLibro" placeholder="Autore" />
+    <button onclick="aggiungiLibro()">Salva libro</button>
+
+    <hr />
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <div class="debug">
+    <h3>Token JWT</h3>
+    <pre id="jwtTokenBox"></pre>
+
+    <h3>Token CSRF</h3>
+    <pre id="csrfTokenBox"></pre>
+  </div>
+
+  <script>
+    async function fetchCsrfToken() {
+      const res = await fetch("http://127.0.0.1:8080/api/auth/csrf", {
+        credentials: 'include'
+      });
+      const data = await res.json();
+      localStorage.setItem("csrfToken", data.token);
+      aggiornaToken();
+    }
+
+    async function login() {
+      await fetchCsrfToken(); // ottiene CSRF prima del login
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("http://127.0.0.1:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-XSRF-TOKEN": localStorage.getItem("csrfToken")
+        },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("accessToken", data.accessToken);
+        await fetchCsrfToken(); // ricarica CSRF dopo login
+        alert("Login effettuato!");
+      } else {
+        alert("Errore nel login");
+      }
+
+      aggiornaToken();
+    }
+
+    async function caricaLibri() {
+      const res = await fetch("http://127.0.0.1:8080/api/libro/findAllBooks", {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("accessToken"),
+          "X-XSRF-TOKEN": localStorage.getItem("csrfToken")
+        },
+        credentials: 'include'
+      });
+
+      const ul = document.getElementById("libri");
+      ul.innerHTML = "";
+
+      if (res.ok) {
+        const books = await res.json();
+        books.forEach(book => {
+          const li = document.createElement("li");
+          li.textContent = `${book.nome} - ${book.autore}`;
+          ul.appendChild(li);
+        });
+		await fetchCsrfToken(); // ricarico il csrf dopo il caricamento dei libri
+		aggiornaToken();
+      } else {
+        ul.innerHTML = "<li>Accesso negato o errore</li>";
+      }
+    }
+
+    async function aggiungiLibro() {
+      const nome = document.getElementById("nomeLibro").value;
+      const autore = document.getElementById("autoreLibro").value;
+
+      const res = await fetch("http://127.0.0.1:8080/api/libro/saveBook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + localStorage.getItem("accessToken"),
+          "X-XSRF-TOKEN": localStorage.getItem("csrfToken")
+        },
+        credentials: 'include',
+        body: JSON.stringify({ nome, autore })
+      });
+
+      if (res.ok) {
+        alert("Libro inserito!");
+        caricaLibri();
+		await fetchCsrfToken(); // ricarico il csrf token dopo l'inserimento di un nuovo libro'
+		aggiornaToken();
+      } else {
+        alert("Errore durante l'inserimento del libro. Controlla di avere i giusti provilegi amministrativi");
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("csrfToken");
+      document.getElementById("libri").innerHTML = "";
+      aggiornaToken();
+      alert("Logout effettuato");
+    }
+
+    function aggiornaToken() {
+      document.getElementById("jwtTokenBox").textContent = localStorage.getItem("accessToken") || "Nessun token";
+      document.getElementById("csrfTokenBox").textContent = localStorage.getItem("csrfToken") || "Nessun token";
+    }
+
+    // caricamento iniziale
+    aggiornaToken();
+  </script>
+</body>
+</html>
