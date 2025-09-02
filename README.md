@@ -109,7 +109,7 @@ Il frontend in **HTML+JavaScript** permette:
 ![Logout riuscito](SCHERMATE/logout_ok.png)
 
 ### 10.3 Logout con pulizia dei token
-![Logout riuscito](SCHERMATE/logout_pulizia_token_OK.png)
+![Logout riuscito](SCHERMATE/logout_pulizia_token.png)
 
 ### 10.4 Inserimento di un libro
 ![Libro inserito](SCHERMATE/insert_libro.png)
