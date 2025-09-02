@@ -2,29 +2,47 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>SAOS2025 - Frontend</title>
+  <title>SAOS2025 - Gestione Libreria</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: space-between;
       padding: 20px;
+      background-color: #f4f4f4;
     }
 
     .container {
       width: 60%;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     .debug {
       width: 35%;
       padding: 10px;
       border-left: 1px solid #ccc;
+      background: #fff;
+      border-radius: 8px;
     }
 
-    input, button {
+    input, select, button {
       margin: 5px 0;
-      padding: 8px;
+      padding: 10px;
       width: 100%;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .message {
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+      color: #333;
     }
 
     textarea {
@@ -40,6 +58,19 @@
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
+    <div class="message" id="loginMessage"></div>
+
+    <h2>Registrazione Utente</h2>
+    <input type="text" id="regUsername" placeholder="Username" />
+    <input type="email" id="regEmail" placeholder="Email" />
+    <input type="password" id="regPassword" placeholder="Password" />
+    <select id="regRuolo">
+      <option value="UTENTE">Utente</option>
+      <option value="MODERATORE">Moderatore</option>
+      <option value="ADMIN">Admin</option>
+    </select>
+    <button onclick="registrazione()">Registrati</button>
+    <div class="message" id="regMessage"></div>
 
     <h2>Libri</h2>
     <button onclick="caricaLibri()">Carica tutti i libri</button>
@@ -64,39 +95,102 @@
 
   <script>
     async function fetchCsrfToken() {
-      const res = await fetch("http://127.0.0.1:8080/api/auth/csrf", {
-        credentials: 'include'
-      });
-      const data = await res.json();
-      localStorage.setItem("csrfToken", data.token);
-      aggiornaToken();
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/auth/csrf", {
+          credentials: 'include'
+        });
+        const data = await res.json();
+        localStorage.setItem("csrfToken", data.token);
+        aggiornaToken();
+        return data.token;
+      } catch (err) {
+        console.error("Errore nel recupero CSRF:", err);
+        return null;
+      }
     }
 
     async function login() {
-      await fetchCsrfToken(); // ottiene CSRF prima del login
+      const csrfToken = await fetchCsrfToken();
+      if (!csrfToken) {
+        document.getElementById("loginMessage").textContent = "Impossibile ottenere il token CSRF.";
+        return;
+      }
+
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
 
-      const res = await fetch("http://127.0.0.1:8080/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-XSRF-TOKEN": localStorage.getItem("csrfToken")
-        },
-        credentials: 'include',
-        body: JSON.stringify({ username, password })
-      });
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-XSRF-TOKEN": csrfToken
+          },
+          credentials: 'include',
+          body: JSON.stringify({ username, password })
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        localStorage.setItem("accessToken", data.accessToken);
-        await fetchCsrfToken(); // ricarica CSRF dopo login
-        alert("Login effettuato!");
-      } else {
-        alert("Errore nel login");
+        if (res.ok) {
+          const data = await res.json();
+          localStorage.setItem("accessToken", data.accessToken);
+          await fetchCsrfToken(); // nuovo CSRF post-login
+          document.getElementById("loginMessage").textContent = `Login riuscito! Benvenuto ${data.username}`;
+        } else if (res.status === 401) {
+          document.getElementById("loginMessage").textContent = "Credenziali non valide.";
+        } else {
+          document.getElementById("loginMessage").textContent = "Errore durante il login.";
+        }
+      } catch (err) {
+        document.getElementById("loginMessage").textContent = "Errore imprevisto.";
+        console.error(err);
       }
 
       aggiornaToken();
+    }
+
+    async function registrazione() {
+      const csrfToken = await fetchCsrfToken();
+      if (!csrfToken) {
+        document.getElementById("regMessage").textContent = "Impossibile ottenere il token CSRF.";
+        return;
+      }
+
+      if (!localStorage.getItem("accessToken")) {
+        document.getElementById("regMessage").textContent = "Devi essere loggato come amministratore per registrare un utente.";
+        return;
+      }
+
+      const data = {
+        username: document.getElementById("regUsername").value,
+        email: document.getElementById("regEmail").value,
+        password: document.getElementById("regPassword").value,
+        ruoli: [document.getElementById("regRuolo").value]
+      };
+
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/auth/registrazione", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("accessToken"),
+            "X-XSRF-TOKEN": csrfToken
+          },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          document.getElementById("regMessage").textContent = result.message || "Registrazione completata!";
+        } else if (res.status === 403) {
+          document.getElementById("regMessage").textContent = "Non hai i permessi per registrare un utente.";
+        } else {
+          document.getElementById("regMessage").textContent = "Errore durante la registrazione.";
+        }
+      } catch (err) {
+        document.getElementById("regMessage").textContent = "Errore imprevisto.";
+        console.error(err);
+      }
     }
 
     async function caricaLibri() {
@@ -119,10 +213,12 @@
           li.textContent = `${book.nome} - ${book.autore}`;
           ul.appendChild(li);
         });
-		await fetchCsrfToken(); // ricarico il csrf dopo il caricamento dei libri
-		aggiornaToken();
+        await fetchCsrfToken(); // aggiorna CSRF dopo caricamento
+        aggiornaToken();
+      } else if (res.status === 403) {
+        ul.innerHTML = "<li>Non hai i permessi per visualizzare i libri.</li>";
       } else {
-        ul.innerHTML = "<li>Accesso negato o errore</li>";
+        ul.innerHTML = "<li>Errore nel caricamento dei libri.</li>";
       }
     }
 
@@ -144,10 +240,12 @@
       if (res.ok) {
         alert("Libro inserito!");
         caricaLibri();
-		await fetchCsrfToken(); // ricarico il csrf token dopo l'inserimento di un nuovo libro'
-		aggiornaToken();
+        await fetchCsrfToken();
+        aggiornaToken();
+      } else if (res.status === 403) {
+        alert("Non hai i permessi per aggiungere libri.");
       } else {
-        alert("Errore durante l'inserimento del libro. Controlla di avere i giusti provilegi amministrativi");
+        alert("Errore durante l'inserimento del libro.");
       }
     }
 
@@ -155,6 +253,8 @@
       localStorage.removeItem("accessToken");
       localStorage.removeItem("csrfToken");
       document.getElementById("libri").innerHTML = "";
+      document.getElementById("loginMessage").textContent = "";
+      document.getElementById("regMessage").textContent = "";
       aggiornaToken();
       alert("Logout effettuato");
     }

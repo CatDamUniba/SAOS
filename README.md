@@ -100,3 +100,31 @@ Il frontend in **HTML+JavaScript** permette:
 - Visualizzazione libri
 - Inserimento libri (MODERATORE/ADMIN)
 - Logout (cancella token e sessione)
+
+## 10. Schermate
+### 10.1 Login
+![Login riuscito](SCHERMATE/login_ok.png)
+
+### 10.2 Logout
+![Logout riuscito](SCHERMATE/logout_ok.png)
+
+### 10.3 Logout con pulizia dei token
+![Logout riuscito](SCHERMATE/logout_pulizia_token_OK.png)
+
+### 10.4 Inserimento di un libro
+![Libro inserito](SCHERMATE/insert_libro.png)
+
+### 10.5 libro inserito
+![Libro inserito](SCHERMATE/libro_inserito.png)
+
+### 10.6 Visualizzazione dei libri
+![visualizza_libri](SCHERMATE/visual_libri.png)
+
+### 10.7 Errore di inserimento libro per mancanza di privilegi ADMIN/MODERATORE
+![Errore 1 - insufficienza privilegi di ADMIN](SCHERMATE/error1_no_ins_libro.png)
+
+### 10.8 Errore di inserimento user per mancanza di privilegi ADMIN
+![Errore 2 - insufficienza privilegi di ADMIN](SCHERMATE/error2_no_ins_user.png)
+
+### 10.9 Errore di inserimento user per mancanza di privilegi ADMIN
+![Errore 3 - insufficienza privilegi di UTENTE](SCHERMATE/error3_no_ins_user_moderatore.png)
