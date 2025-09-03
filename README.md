@@ -128,3 +128,6 @@ Il frontend in **HTML+JavaScript** permette:
 
 ### 10.9 Errore di inserimento user per mancanza di privilegi ADMIN
 ![Errore 3 - insufficienza privilegi di UTENTE](SCHERMATE/error3_no_ins_user_moderatore.png)
+
+### 10.10 Esecuzione test di sicurezza con utente avente privilegi ADMIN
+![Test di sicurezza](SCHERMATE/report_security.png)
