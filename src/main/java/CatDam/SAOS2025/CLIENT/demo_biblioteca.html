@@ -50,6 +50,16 @@
       height: 150px;
       margin-top: 10px;
     }
+
+    #jwtTokenBox {
+      text-wrap: wrap;
+      overflow-wrap: break-word;
+    }
+
+    #csrfTokenBox {
+      text-wrap: wrap;
+      overflow-wrap: break-word;
+    }
   </style>
 </head>
 <body>
@@ -134,7 +144,8 @@
           const data = await res.json();
           localStorage.setItem("accessToken", data.accessToken);
           await fetchCsrfToken(); // nuovo CSRF post-login
-          document.getElementById("loginMessage").textContent = `Login riuscito! Benvenuto ${data.username}`;
+          const role = data.roles[0].split("_")[1]
+          document.getElementById("loginMessage").textContent = `Login riuscito! Benvenuto ${data.username} - ${role}`;
         } else if (res.status === 401) {
           document.getElementById("loginMessage").textContent = "Credenziali non valide.";
         } else {
@@ -182,6 +193,10 @@
         if (res.ok) {
           const result = await res.json();
           document.getElementById("regMessage").textContent = result.message || "Registrazione completata!";
+
+          document.getElementById("regUsername").value = "";
+          document.getElementById("regEmail").value = "";
+          document.getElementById("regPassword").value = "";
         } else if (res.status === 403) {
           document.getElementById("regMessage").textContent = "Non hai i permessi per registrare un utente.";
         } else {
@@ -242,6 +257,9 @@
         caricaLibri();
         await fetchCsrfToken();
         aggiornaToken();
+
+      document.getElementById("nomeLibro").value = "";
+      document.getElementById("autoreLibro").value = "";
       } else if (res.status === 403) {
         alert("Non hai i permessi per aggiungere libri.");
       } else {
@@ -252,9 +270,17 @@
     function logout() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("csrfToken");
-      document.getElementById("libri").innerHTML = "";
+	  
+	  document.getElementById("username").value = "";
+	  document.getElementById("libri").innerHTML = "";
       document.getElementById("loginMessage").textContent = "";
       document.getElementById("regMessage").textContent = "";
+      document.getElementById("regUsername").value = "";
+      document.getElementById("regEmail").value = "";
+      document.getElementById("regPassword").value = "";
+      document.getElementById("nomeLibro").value = "";
+      document.getElementById("autoreLibro").value = "";
+
       aggiornaToken();
       alert("Logout effettuato");
     }
