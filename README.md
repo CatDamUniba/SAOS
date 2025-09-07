@@ -3,7 +3,8 @@
 
 ## 1. Descrizione del progetto
 SAOS2025 è un’applicazione sviluppata con **Spring Boot** per la gestione di una libreria online.  
-Il sistema implementa un’autenticazione basata su **JSON Web Token (JWT)** con gestione dei ruoli (UTENTE, MODERATORE, ADMIN) e protezione **CSRF**.  
+Il sistema implementa un’autenticazione basata su **JSON Web Token (JWT)** con gestione dei ruoli (UTENTE, MODERATORE, ADMIN) e protezione **CSRF**.
+La persistenza dei dati viene gestita con un Data Base MariaDB.  
 È incluso un semplice frontend in **HTML + JavaScript** per permettere il login, la registrazione di utenti e la gestione dei libri.
 
 ---
@@ -69,7 +70,7 @@ CatDam.SAOS2025
 ├── controllers        # API REST (AuthController, LibroController)
 ├── entities           # Entità JPA (Utente, Ruolo, Libro)
 ├── repositories       # DAO / repository JPA
-├── security           # Configurazioni sicurezza, filtro JWT, JwtUtils
+├── security           # WebSecurityConfig, AuthTokenFilter, JwtUtils
 ├── payload            # DTO input (Credenziali, Registrazione)
 ├── response           # DTO output (JwtResponse, MessageResponse)
 └── SAOS2025Application.java
